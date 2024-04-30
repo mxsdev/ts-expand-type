@@ -8,7 +8,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from "vscode"
-import * as Proto from "typescript/lib/protocol"
+import type * as ts from "typescript/lib/tsserverlibrary"
 
 export interface IFilePathToResourceConverter {
     /**
@@ -41,7 +41,7 @@ function processInlineTags(text: string): string {
 }
 
 function getTagBodyText(
-    tag: Proto.JSDocTagInfo,
+    tag: ts.server.protocol.JSDocTagInfo,
     filePathConverter: IFilePathToResourceConverter
 ): string | undefined {
     if (!tag.text) {
@@ -91,7 +91,7 @@ function getTagBodyText(
 }
 
 function getTagDocumentation(
-    tag: Proto.JSDocTagInfo,
+    tag: ts.server.protocol.JSDocTagInfo,
     filePathConverter: IFilePathToResourceConverter
 ): string | undefined {
     switch (tag.name) {
@@ -129,7 +129,7 @@ function getTagDocumentation(
 }
 
 export function plainWithLinks(
-    parts: readonly Proto.SymbolDisplayPart[] | string,
+    parts: readonly ts.server.protocol.SymbolDisplayPart[] | string,
     filePathConverter: IFilePathToResourceConverter
 ): string {
     return processInlineTags(convertLinkTags(parts, filePathConverter))
@@ -139,7 +139,7 @@ export function plainWithLinks(
  * Convert `@link` inline tags to markdown links
  */
 function convertLinkTags(
-    parts: readonly Proto.SymbolDisplayPart[] | string | undefined,
+    parts: readonly ts.server.protocol.SymbolDisplayPart[] | string | undefined,
     filePathConverter: IFilePathToResourceConverter
 ): string {
     if (!parts) {
@@ -155,7 +155,7 @@ function convertLinkTags(
     let currentLink:
         | {
               name?: string
-              target?: Proto.FileSpan
+              target?: ts.server.protocol.FileSpan
               text?: string
               readonly linkcode: boolean
           }
@@ -222,7 +222,7 @@ function convertLinkTags(
                 if (currentLink) {
                     currentLink.name = part.text
                     currentLink.target = (
-                        part as Proto.JSDocLinkDisplayPart
+                        part as ts.server.protocol.JSDocLinkDisplayPart
                     ).target
                 }
                 break
@@ -242,7 +242,7 @@ function convertLinkTags(
 }
 
 export function tagsMarkdownPreview(
-    tags: readonly Proto.JSDocTagInfo[],
+    tags: readonly ts.server.protocol.JSDocTagInfo[],
     filePathConverter: IFilePathToResourceConverter
 ): string {
     return tags
@@ -251,8 +251,8 @@ export function tagsMarkdownPreview(
 }
 
 export function markdownDocumentation(
-    documentation: Proto.SymbolDisplayPart[] | string,
-    tags: Proto.JSDocTagInfo[],
+    documentation: ts.server.protocol.SymbolDisplayPart[] | string,
+    tags: ts.server.protocol.JSDocTagInfo[],
     // filePathConverter: IFilePathToResourceConverter,
     baseUri: vscode.Uri | undefined
 ): vscode.MarkdownString {
@@ -270,8 +270,8 @@ export function markdownDocumentation(
 
 export function addMarkdownDocumentation(
     out: vscode.MarkdownString,
-    documentation: Proto.SymbolDisplayPart[] | string | undefined,
-    tags: Proto.JSDocTagInfo[] | undefined,
+    documentation: ts.server.protocol.SymbolDisplayPart[] | string | undefined,
+    tags: ts.server.protocol.JSDocTagInfo[] | undefined,
     converter: IFilePathToResourceConverter
 ): vscode.MarkdownString {
     if (documentation) {

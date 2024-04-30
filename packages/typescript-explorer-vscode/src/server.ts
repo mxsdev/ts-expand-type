@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
-import type * as Proto from "typescript/lib/protocol"
+import type * as ts from "typescript/lib/tsserverlibrary"
+
 import {
     CustomTypeScriptRequestId,
     CustomTypeScriptRequestOfId,
@@ -9,6 +10,7 @@ import {
     TypeInfo,
 } from "@ts-type-explorer/api"
 import {
+    getDurationAlert,
     positionFromLineAndCharacter,
     rangeFromLineAndCharacters,
     rangeToTextRange,
@@ -26,7 +28,7 @@ async function getQuickInfoAtPosition(
             "quickinfo-full",
             toFileLocationRequestArgs(fileName, position)
         )
-        .then((r) => (r as Proto.QuickInfoResponse).body)
+        .then((r) => (r as ts.server.protocol.QuickInfoResponse).body)
 }
 
 async function customTypescriptRequest<Id extends CustomTypeScriptRequestId>(
@@ -34,6 +36,13 @@ async function customTypescriptRequest<Id extends CustomTypeScriptRequestId>(
     position: vscode.Position,
     request: CustomTypeScriptRequestOfId<Id>
 ): Promise<CustomTypeScriptResponseBody<Id> | undefined> {
+    const { register, abort } = getDurationAlert(
+        "TSServer needs more time to respond, please wait a few seconds",
+        3000
+    )
+
+    register()
+
     return await vscode.commands
         .executeCommand("typescript.tsserverRequest", "completionInfo", {
             ...toFileLocationRequestArgs(fileName, position),
@@ -44,6 +53,7 @@ async function customTypescriptRequest<Id extends CustomTypeScriptRequestId>(
             triggerCharacter: request,
         })
         .then((val) => {
+            abort()
             if (!val) return undefined
 
             const response = val as CustomTypeScriptResponse

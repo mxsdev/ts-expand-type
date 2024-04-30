@@ -10,7 +10,12 @@ import * as vscode from "vscode"
 import { showTypeParameterInfo, showBaseClassInfo } from "../config"
 import { markdownDocumentation } from "../markdown"
 import { StateManager } from "../state/stateManager"
-import { logError, rangeFromLineAndCharacters, showError } from "../util"
+import {
+    getDurationAlert,
+    logError,
+    rangeFromLineAndCharacters,
+    showError,
+} from "../util"
 import { getQuickInfoAtLocation, getTypeTreeAtLocation } from "../server"
 import { getMetaWithTypeArguments, getMeta } from "./typeTreeViewLocalizer"
 
@@ -94,12 +99,21 @@ export class TypeTreeProvider implements vscode.TreeDataProvider<TypeTreeItem> {
     }
 
     async getChildren(element?: TypeTreeItem): Promise<TypeTreeItem[]> {
+        const { register, abort } = getDurationAlert(
+            "TSServer needs more time to get children information, please wait a few seconds",
+            3000
+        )
+
+        register()
+
         const children = await this.getChildrenWorker(element).catch((e) => {
             logError(e, "Error getting children")
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
             showError(e.message ?? "Error getting children")
             return []
         })
+
+        abort()
 
         this._onDidGetChildren.fire({ parent: element, children })
 

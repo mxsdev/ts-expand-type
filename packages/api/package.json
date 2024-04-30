@@ -5,6 +5,6 @@
     "type": "commonjs",
     "license": "MIT",
     "devDependencies": {
-        "typescript": "^4.8.4"
+        "typescript": "^5.3.0"
     }
 }

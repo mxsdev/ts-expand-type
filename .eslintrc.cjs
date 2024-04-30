@@ -23,7 +23,9 @@ module.exports = {
     ],
     root: true,
     rules: {
+        "@typescript-eslint/no-unused-vars": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-duplicate-enum-values": "off",
         "@typescript-eslint/no-floating-promises": "off",
         "import/no-extraneous-dependencies": [
             "error",

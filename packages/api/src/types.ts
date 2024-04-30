@@ -184,7 +184,7 @@ export type TypeInfoNoId = {
     | {
           kind: "substitution"
           baseType: TypeInfo
-          substitute: TypeInfo
+          constraint: TypeInfo
       }
     | { kind: "non_primitive" }
     | { kind: "intrinsic" }

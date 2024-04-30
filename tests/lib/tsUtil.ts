@@ -14,7 +14,6 @@ export function createTsContext(fileName: string): SourceFileTypescriptContext {
         program,
         sourceFile,
         typeChecker,
-        // @ts-expect-error - semantic type difference
         ts,
     }
 }

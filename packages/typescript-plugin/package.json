@@ -9,6 +9,6 @@
         "@ts-type-explorer/api": "^0.4.0"
     },
     "devDependencies": {
-        "typescript": "^4.8.4"
+        "typescript": "^5.3.0"
     }
 }

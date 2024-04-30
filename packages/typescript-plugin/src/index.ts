@@ -7,6 +7,7 @@ import {
     TypescriptContext,
 } from "@ts-type-explorer/api"
 import { SourceFileTypescriptContext } from "@ts-type-explorer/api"
+import type * as ts from "typescript/lib/tsserverlibrary"
 
 // TODO: add config for e.g. max depth
 

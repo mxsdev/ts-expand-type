@@ -1,7 +1,6 @@
 import * as vscode from "vscode"
 import type * as ts from "typescript"
 import { TextRange } from "@ts-type-explorer/api"
-import type * as Proto from "typescript/lib/protocol"
 import { dialogueErrors, logErrors } from "./config"
 
 export const positionToLineAndCharacter = (
@@ -19,7 +18,7 @@ export const rangeToTextRange = (range: vscode.Range): TextRange => ({
 export const toFileLocationRequestArgs = (
     file: string,
     position: vscode.Position
-): Proto.FileLocationRequestArgs => ({
+): ts.server.protocol.FileLocationRequestArgs => ({
     file,
     line: position.line + 1,
     offset: position.character + 1,
@@ -92,4 +91,21 @@ export function isDocumentSupported({ languageId }: vscode.TextDocument) {
         languageId === "typescriptreact" ||
         languageId === "javascriptreact"
     )
+}
+
+export function getDurationAlert(content: string, duration: number) {
+    let timer: NodeJS.Timeout | undefined
+    return {
+        register: () => {
+            timer = setTimeout(() => {
+                vscode.window.showInformationMessage(
+                    `Typescript Explorer: ${content}`
+                )
+            }, duration)
+        },
+        abort: () => {
+            timer && clearTimeout(timer)
+            timer = undefined
+        },
+    }
 }
