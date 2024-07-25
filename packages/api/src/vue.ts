@@ -87,22 +87,19 @@ export function getPositionOfLineAndCharacterForVue(
     const language = (oldPrograme.__volar__ || oldPrograme.__vue__)?.language
     if (language?.scripts) {
         const vFile = language.scripts.get(fileName)
-        if (
-            vFile?.generated?.root &&
-            vFile?.generated?.root.languageId === "vue"
-        ) {
-            const code = vFile?.generated?.root?.embeddedCodes?.[0]
-            if (code) {
-                const sourceMap = new SourceMaps.SourceMap(code.mappings)
+        const serviceScript =
+            vFile?.generated?.languagePlugin.typescript?.getServiceScript(
+                vFile.generated.root
+            )
+        if (vFile?.generated?.root?.languageId === "vue" && serviceScript) {
+            const sourceMap = language.maps.get(serviceScript.code, vFile.id)
 
-                const snapshotLength =
-                    vFile?.generated?.root?.snapshot?.getLength()
-                if (startPos < snapshotLength) {
-                    startPos =
-                        (sourceMap.getGeneratedOffset(startPos)?.[0] || -1) +
-                        // https://github.com/volarjs/volar.js/blob/v2.2.0-alpha.12/packages/typescript/lib/node/proxyCreateProgram.ts#L143
-                        (snapshotLength || 0)
-                }
+            const snapshotLength = vFile?.generated?.root?.snapshot?.getLength()
+            if (startPos < snapshotLength) {
+                startPos =
+                    (sourceMap?.getGeneratedOffset?.(startPos)?.[0] || -1) +
+                    // https://github.com/volarjs/volar.js/blob/v2.2.0-alpha.12/packages/typescript/lib/node/proxyCreateProgram.ts#L143
+                    (snapshotLength || 0)
             }
         }
     }
@@ -120,21 +117,26 @@ export function getPositionOfLineAndCharacterForVue(
 
             if (language?.scripts) {
                 const vFile = language.scripts.get(fileName)
+                const serviceScript =
+                    vFile?.generated?.languagePlugin.typescript?.getServiceScript(
+                        vFile.generated.root
+                    )
                 if (
-                    vFile?.generated?.root &&
-                    vFile?.generated?.root.languageId === "vue"
+                    vFile?.generated?.root?.languageId === "vue" &&
+                    serviceScript
                 ) {
                     const code = vFile?.generated?.root?.embeddedCodes?.[0]
                     if (code) {
-                        const sourceMap = new SourceMaps.SourceMap(
-                            code.mappings
+                        const sourceMap = language.maps.get(
+                            serviceScript.code,
+                            vFile.id
                         )
 
                         const snapshotLength =
                             vFile?.generated?.root?.snapshot?.getLength()
 
                         if (startPos > snapshotLength) {
-                            const restoreStartPos = sourceMap.getSourceOffset(
+                            const restoreStartPos = sourceMap?.getSourceOffset(
                                 startPos - snapshotLength
                             )?.[0]
 
