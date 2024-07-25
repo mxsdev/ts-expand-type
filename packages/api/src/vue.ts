@@ -23,7 +23,7 @@ type VuePrograme = ts.Program & {
 let oldPrograme: VuePrograme | undefined
 
 export function getPositionOfLineAndCharacterForVue(
-    ctx: TypescriptContext,
+    ctx: TypescriptContext & { sourceFile: ts.SourceFile },
     location: SourceFileLocation,
     startPos = -1
 ) {
@@ -94,13 +94,64 @@ export function getPositionOfLineAndCharacterForVue(
             const code = vFile?.generated?.root?.embeddedCodes?.[0]
             if (code) {
                 const sourceMap = new SourceMaps.SourceMap(code.mappings)
-                startPos =
-                    (sourceMap.getGeneratedOffset(startPos)?.[0] || -1) +
-                    // https://github.com/volarjs/volar.js/blob/v2.2.0-alpha.12/packages/typescript/lib/node/proxyCreateProgram.ts#L143
-                    (vFile?.generated?.root?.snapshot?.getLength() || 0)
+
+                const snapshotLength =
+                    vFile?.generated?.root?.snapshot?.getLength()
+                if (startPos < snapshotLength) {
+                    startPos =
+                        (sourceMap.getGeneratedOffset(startPos)?.[0] || -1) +
+                        // https://github.com/volarjs/volar.js/blob/v2.2.0-alpha.12/packages/typescript/lib/node/proxyCreateProgram.ts#L143
+                        (snapshotLength || 0)
+                }
             }
         }
     }
 
-    return startPos
+    return [
+        startPos,
+        (startPos: number) => {
+            if (!oldPrograme?.__vue__ && !oldPrograme?.__volar__) {
+                console.log("create vue program")
+                oldPrograme = createProgram(options) as VuePrograme
+            }
+
+            const language = (oldPrograme.__volar__ || oldPrograme.__vue__)
+                ?.language
+
+            if (language?.scripts) {
+                const vFile = language.scripts.get(fileName)
+                if (
+                    vFile?.generated?.root &&
+                    vFile?.generated?.root.languageId === "vue"
+                ) {
+                    const code = vFile?.generated?.root?.embeddedCodes?.[0]
+                    if (code) {
+                        const sourceMap = new SourceMaps.SourceMap(
+                            code.mappings
+                        )
+
+                        const snapshotLength =
+                            vFile?.generated?.root?.snapshot?.getLength()
+
+                        if (startPos > snapshotLength) {
+                            const restoreStartPos = sourceMap.getSourceOffset(
+                                startPos - snapshotLength
+                            )?.[0]
+
+                            if (restoreStartPos) {
+                                const restoreLocation =
+                                    ctx.sourceFile.getLineAndCharacterOfPosition(
+                                        restoreStartPos
+                                    )
+
+                                return restoreLocation
+                            }
+                        }
+                    }
+                }
+            }
+
+            return undefined
+        },
+    ] as const
 }
