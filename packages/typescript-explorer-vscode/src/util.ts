@@ -90,6 +90,7 @@ export function isDocumentSupported({ languageId }: vscode.TextDocument) {
         languageId === "typescript" ||
         languageId === "javascript" ||
         languageId === "typescriptreact" ||
-        languageId === "javascriptreact"
+        languageId === "javascriptreact" ||
+        languageId === "vue"
     )
 }

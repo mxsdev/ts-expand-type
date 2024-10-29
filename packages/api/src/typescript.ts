@@ -1,4 +1,4 @@
-import ts = require("typescript")
+import type * as ts from "typescript"
 import { TypescriptContext } from "./types"
 
 /**

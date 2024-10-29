@@ -1,15 +1,17 @@
 {
     "compilerOptions": {
         "target": "es2017",
+        "lib": ["es2021"],
         "module": "CommonJS",
         "moduleResolution": "node",
+        "esModuleInterop": true,
         "strict": true,
         "noImplicitAny": true,
         "noFallthroughCasesInSwitch": true,
         "declaration": true,
         "sourceMap": true,
         "rootDir": "./src",
-        "outDir": "./dist",
+        "outDir": "./out",
         "stripInternal": true
     },
     "exclude": ["node_modules", "dist"],

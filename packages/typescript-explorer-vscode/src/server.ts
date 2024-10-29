@@ -26,7 +26,14 @@ async function getQuickInfoAtPosition(
             "quickinfo-full",
             toFileLocationRequestArgs(fileName, position)
         )
-        .then((r) => (r as Proto.QuickInfoResponse).body)
+        .then(
+            (r) => (r as Proto.QuickInfoResponse).body,
+            (e) => {
+                if (!fileName.endsWith(".vue")) {
+                    throw e
+                }
+            }
+        )
 }
 
 async function customTypescriptRequest<Id extends CustomTypeScriptRequestId>(

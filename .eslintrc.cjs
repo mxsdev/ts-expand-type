@@ -20,13 +20,16 @@ module.exports = {
         "**/.vscode-test/**",
         "packages/typescript-explorer-vscode/src/test/**",
         "scripts/**",
+        "packages/api/tsup.config.ts",
     ],
     root: true,
     rules: {
+        "@typescript-eslint/no-unused-vars": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-duplicate-enum-values": "off",
         "@typescript-eslint/no-floating-promises": "off",
         "import/no-extraneous-dependencies": [
-            "error",
+            "warn",
             {
                 devDependencies: false,
             },

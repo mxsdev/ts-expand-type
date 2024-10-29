@@ -147,7 +147,8 @@ export function checkExpression(ctx: TypescriptContext, node: ts.Node) {
         },
     } as unknown as ts.Declaration
     symbol.valueDeclaration = declaration
-
+    // @ts-expect-error  ts will get `symbol.links.checkFlags` but `symbol.links` will be `undefined`
+    if (!symbol.links) return undefined
     const type = typeChecker.getTypeOfSymbolAtLocation(symbol, {
         parent: {},
     } as unknown as ts.Node)
@@ -769,6 +770,7 @@ export function getDescendantAtRange(
         node: sourceFile,
         start: sourceFile.getStart(sourceFile),
     }
+
     searchDescendants(sourceFile)
     return bestMatch.node
 

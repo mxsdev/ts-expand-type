@@ -1,6 +1,6 @@
 /* eslint-disable prefer-const */
-import * as assert from "assert"
-import type * as ts from "typescript"
+import assert from "assert"
+import * as ts from "typescript"
 import { configDefaults } from "./config"
 import {
     wrapSafe,
@@ -64,6 +64,7 @@ import {
     getAliasedSymbol,
     getDescendantAtPosition,
 } from "./util"
+import { getPositionOfLineAndCharacterForVue } from "./vue"
 
 const maxDepthExceeded: TypeInfo = { kind: "max_depth", id: getEmptyTypeId() }
 
@@ -1026,12 +1027,27 @@ export function getTypeInfoAtRange(
     apiConfig?: Partial<APIConfig>
 ) {
     const sourceFile = ctx.program.getSourceFile(location.fileName)
+
     if (!sourceFile) return undefined
 
-    const startPos = sourceFile.getPositionOfLineAndCharacter(
-        location.range.start.line,
-        location.range.start.character
-    )
+    const rawStartPos =
+        sourceFile.getPositionOfLineAndCharacter(
+            location.range.start.line,
+            location.range.start.character
+        ) || -1
+
+    let startPos = rawStartPos
+    let fixLocation: (startPos: number) => ts.LineAndCharacter | undefined
+    if (location.fileName.endsWith(".vue")) {
+        const [_startPos, _fixLocation] = getPositionOfLineAndCharacterForVue(
+            { ...ctx, sourceFile },
+            location,
+            startPos
+        )
+        startPos = _startPos
+        fixLocation = _fixLocation
+        console.log(startPos, rawStartPos)
+    }
 
     // TODO: integrate this
     //       getDescendantAtRange will probably need to be improved...
@@ -1046,7 +1062,41 @@ export function getTypeInfoAtRange(
         return undefined
     }
 
-    return getTypeInfoOfNode(ctx, node, apiConfig)
+    const typeInfoAtRange = getTypeInfoOfNode(ctx, node, apiConfig)
+
+    function updateLocation(
+        typeInfoAtRange: TypeInfo,
+        sourceFile: ts.SourceFile
+    ) {
+        const typeLocation =
+            typeInfoAtRange?.symbolMeta?.declarations?.[0].location
+        if (typeLocation && typeLocation.fileName === location.fileName) {
+            const newStartPos = sourceFile.getPositionOfLineAndCharacter(
+                typeLocation.range.start.line,
+                typeLocation.range.start.character
+            )
+            const newEndPos = sourceFile.getPositionOfLineAndCharacter(
+                typeLocation.range.end.line,
+                typeLocation.range.end.character
+            )
+
+            typeLocation.range.start =
+                fixLocation(newStartPos) ?? typeLocation.range.start
+            typeLocation.range.end =
+                fixLocation(newEndPos) ?? typeLocation.range.end
+        }
+        if ("properties" in typeInfoAtRange) {
+            typeInfoAtRange.properties?.forEach((property) => {
+                updateLocation(property, sourceFile)
+            })
+        }
+    }
+
+    if (typeInfoAtRange && location.fileName.endsWith(".vue")) {
+        updateLocation(typeInfoAtRange, sourceFile)
+    }
+
+    return typeInfoAtRange
 }
 
 export function getTypeInfoOfNode(
@@ -1059,6 +1109,7 @@ export function getTypeInfoOfNode(
     }
 
     const symbolOrType = getSymbolOrTypeOfNode(ctx, node)
+
     if (!symbolOrType) return undefined
 
     return generateTypeTree(symbolOrType, ctx, apiConfig)
